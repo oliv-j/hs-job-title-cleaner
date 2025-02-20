@@ -1,4 +1,4 @@
-# hs-job-title-cleaner
+# HubSpot job title cleaner for Operations Hub
  Cleans Job TItle fields with a Custom coded action (using Python) in HubSpot operations hub 
 
 =========================
