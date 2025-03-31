@@ -60,7 +60,7 @@ Step 3: write the cleaned value back to the job Title field
 The script will set "outcome" as "no_change" if no change has been made to the job title, and "success" if it has been cleaned.
 You can use this data to only write changes back to contact records where the data has been cleaned
 Create a single branch but change the top drop-down from "enrolled contact" to "Action Outcomes" and then select "outcome".
-Set the logic to "is equal to" and the value to "success" and save it.
+Set the logic to "is equal to" and the value to "changed" and save it.
 In the success branch add another action. The action type shoud be CRM - edit record.
 Select the Job Title property and then select "newTitle" for the property.
 

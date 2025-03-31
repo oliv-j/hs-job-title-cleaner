@@ -91,7 +91,7 @@ def main(event):
 
         if final != job_title:
             hs_state = "Succeeded"
-            outcome = "success"
+            outcome = "changed"
         else:
             hs_state = "Failed, object removed from workflow"
             outcome = "no_change"
