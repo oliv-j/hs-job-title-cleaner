@@ -1,6 +1,27 @@
 # HubSpot job title cleaner for Operations Hub
  Cleans Job TItle fields with a Custom coded action (using Python) in HubSpot operations hub 
 
+This is an early proof of concept test and should be tested first.
+
+Results
+On a test sandbox with 100,000 multi-lingual job title values in business and science / research sectors, the script:
+- Removed 800 values entirely, made 1,200 major changes and 23,000 minor changes.
+- removed illegal entries like email address, single characters, or where the value was just a special character e.g. * or ! or @
+- removed illegal characters at the start and end of job .
+- ignores data in non-latin character set (e.g. Japanese, Korean, Chinese).
+- fixed many formatting issues with capitalisation
+- removed entries with multiple repeating characters mixed with other data e.g. "aaaa" or "jooooob title".
+- Preserved data that could be a science roll.
+- preserved all valid data (whoop!)
+
+What it did not clean or remove, or other issues:
+- Remove values which are strings of jumbled characters (very difficult to figure out if the job title makes sense). e.g. jqocleruair (These were almost always spam where the contact record could be removed using other tests). This is very difficult to do in a multi-lingual way without referencing dictionaries for official words.
+- did not remove properly formated text values which are junk e..g "No thank you"
+- Changed 1st to 1St, 2nd to 2Nd. etc.
+
+Future development / next steps
+After cleaning the data, a call could be made to ChatGPT to ask it to validate any remaining value to see if it is a valid job title.
+ 
 =========================
 Overview
 =========================
