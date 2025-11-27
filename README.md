@@ -1,4 +1,25 @@
 # HubSpot job title cleaner for Operations Hub
+
+## Quick start (local web app)
+- Requires Python 3.10+.
+- From the project root, create/activate a virtual environment and install deps:
+  ```bash
+  python3 -m venv .venv
+  source .venv/bin/activate
+  pip install -r requirements.txt
+  ```
+- Start the app and open the UI:
+  ```bash
+  python app.py
+  ```
+  Then visit http://localhost:5000
+- Drag/drop a CSV (single column in column A; header optional). A job is created (JobTitleClean###), processed immediately, and the cleaned CSV auto-downloads. Jobs and files persist under `jobs/`.
+
+## Command-line cleaner
+- Place your input CSV as `job_titles.csv` (single column of titles, or a column named `Job Title`).
+- Run `python job_title_cleaning.py` to produce `cleaned_job_titles.csv` with index, original, and cleaned values.
+
+## HubSpot workflow action
  Cleans Job TItle fields with a Custom coded action (using Python) in HubSpot operations hub 
 
 This is an early proof of concept test and should be tested first.

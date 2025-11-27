@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Title Cleaner</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --border: #d9e2ec;
+      --primary: #0f766e;
+      --primary-weak: #e0f2f1;
+      --danger: #b91c1c;
+      --danger-weak: #fee2e2;
+      --text: #0f172a;
+      --muted: #475569;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    }
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+    }
+    .header {
+      margin-bottom: 24px;
+    }
+    .header__title {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+    .header__subtitle {
+      margin: 0;
+      color: var(--muted);
+    }
+    .dropzone {
+      border: 2px dashed var(--border);
+      background: white;
+      border-radius: 12px;
+      padding: 28px;
+      text-align: center;
+      transition: border-color 0.2s ease, background 0.2s ease;
+      cursor: pointer;
+    }
+    .dropzone--active {
+      border-color: var(--primary);
+      background: var(--primary-weak);
+    }
+    .dropzone__label {
+      font-size: 18px;
+      margin: 0 0 6px;
+    }
+    .dropzone__hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .jobs {
+      margin-top: 32px;
+    }
+    .jobs__title {
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+    .jobs__list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .jobs__item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      gap: 12px;
+    }
+    .jobs__meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .jobs__name {
+      font-weight: 600;
+    }
+    .jobs__time,
+    .jobs__error {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .jobs__stats {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .jobs__status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      background: #f1f5f9;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .jobs__status--complete {
+      background: var(--primary-weak);
+      color: var(--primary);
+      border-color: rgba(15, 118, 110, 0.35);
+    }
+    .jobs__status--error {
+      background: var(--danger-weak);
+      color: var(--danger);
+      border-color: rgba(185, 28, 28, 0.35);
+    }
+    .jobs__validation {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-left: 3px solid var(--border);
+      background: #f8fafc;
+      border-radius: 6px;
+    }
+    .jobs__sample {
+      margin-top: 6px;
+      display: grid;
+      gap: 4px;
+      font-size: 13px;
+    }
+    .jobs__actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: white;
+      padding: 8px 12px;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+    .button:hover {
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+    .button--primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .empty {
+      padding: 16px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      background: white;
+      text-align: center;
+    }
+    .banner {
+      margin-top: 16px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .banner--error {
+      background: var(--danger-weak);
+      color: var(--danger);
+      border: 1px solid rgba(185, 28, 28, 0.35);
+    }
+    .banner--info {
+      background: var(--primary-weak);
+      color: var(--primary);
+      border: 1px solid rgba(15, 118, 110, 0.35);
+    }
+    .info {
+      margin-top: 36px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+    .info__title {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+    .info__list {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <h1 class="header__title">Job Title Cleaner</h1>
+      <p class="header__subtitle">Drop a CSV (column A) to clean titles. Jobs are stored locally.</p>
+    </header>
+
+    <section class="dropzone" id="dropzone">
+      <h2 class="dropzone__label">Drag &amp; drop CSV here</h2>
+      <p class="dropzone__hint">Or click to browse. Only CSV files are accepted.</p>
+      <input type="file" id="file-input" accept=".csv" style="display:none">
+    </section>
+    <div id="banner" class="banner" style="display:none"></div>
+
+    <section class="jobs">
+      <h3 class="jobs__title">Jobs</h3>
+      <div class="jobs__list" id="jobs-list"></div>
+    </section>
+
+    <section class="info">
+      <h3 class="info__title">What this cleaner does</h3>
+      <ul class="info__list">
+        <li>Strips leading punctuation/quotes, removes emails, phone-like or numeric-only values, and junk tokens (e.g., n/a, test).</li>
+        <li>Converts diacritics to ASCII, preserves whitelisted acronyms (IT, VP, APHL), and title-cases other words; “phd” → “PhD”.</li>
+        <li>Uppercases roman numerals attached to words (e.g., Founder iv → Founder IV).</li>
+        <li>Replaces vertical bars with commas and adds spacing around slashes between long words.</li>
+        <li>Lowers “And” only when between words; preserves “Post Doc”. Invalid results are dropped.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    const dropzone = document.getElementById("dropzone");
+    const fileInput = document.getElementById("file-input");
+    const jobsList = document.getElementById("jobs-list");
+    const banner = document.getElementById("banner");
+    const validationCache = {};
+
+    const setBanner = (message, type = "info") => {
+      if (!message) {
+        banner.style.display = "none";
+        banner.textContent = "";
+        return;
+      }
+      banner.textContent = message;
+      banner.className = `banner banner--${type}`;
+      banner.style.display = "block";
+    };
+
+    const statusClass = (status) => {
+      if (status === "complete") return "jobs__status jobs__status--complete";
+      if (status === "error") return "jobs__status jobs__status--error";
+      return "jobs__status";
+    };
+
+    const triggerDownload = (url) => {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    };
+
+    const renderJobs = (jobs) => {
+      if (!jobs || jobs.length === 0) {
+        jobsList.innerHTML = `<div class="empty">No jobs yet. Drop a CSV to get started.</div>`;
+        return;
+      }
+
+      const items = jobs
+        .slice()
+        .reverse()
+        .map((job) => {
+          const displayTime = job.created_at_display || job.created_at || "";
+          const status = job.status || "new";
+          const downloadLink =
+            status === "complete"
+              ? `<a class="button button--primary" href="/api/download/${job.name}">Download</a>`
+              : "";
+          const validateLink =
+            status === "complete"
+              ? `<button class="button" data-validate="${job.name}" type="button">Validate</button>`
+              : "";
+          const stats = job.stats
+            ? `<div class="jobs__stats">Good: ${job.stats.good ?? 0} • Cleaned: ${job.stats.cleaned ?? 0} • Removed: ${job.stats.removed ?? 0}</div>`
+            : "";
+          const errorText =
+            status === "error" && job.error
+              ? `<div class="jobs__error">Error: ${job.error}</div>`
+              : "";
+          const validation = validationCache[job.name];
+          const validationBlock = validation
+            ? `<div class="jobs__validation">
+                <div class="jobs__stats">Changed rows: ${validation.changed_rows} / ${validation.total_rows}</div>
+                ${validation.sample && validation.sample.length
+                  ? `<details><summary>Samples (${Math.min(validation.sample.length, 10)})</summary>
+                      <div class="jobs__sample">${validation.sample
+                        .map(
+                          (row) =>
+                            `<div><strong>${row["Original Job Title"] || ""}</strong> → ${row["Cleaned Job Title"] || ""}</div>`
+                        )
+                        .join("")}</div>
+                    </details>`
+                  : "<div class='jobs__stats'>No differences in sample.</div>"}
+              </div>`
+            : "";
+          return `
+            <article class="jobs__item">
+              <div class="jobs__meta">
+                <span class="jobs__name">${job.name}</span>
+                <span class="jobs__time">${displayTime}</span>
+                ${stats}
+                ${errorText}
+                ${validationBlock}
+              </div>
+              <div class="jobs__actions">
+                <span class="${statusClass(status)}">${status}</span>
+                ${downloadLink}
+                ${validateLink}
+              </div>
+            </article>
+          `;
+        })
+        .join("");
+      jobsList.innerHTML = items;
+    };
+
+    const validateJob = async (jobName) => {
+      setBanner("");
+      try {
+        const res = await fetch(`/api/validate/${jobName}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Validation failed");
+        validationCache[jobName] = data;
+        renderJobs(currentJobs);
+      } catch (err) {
+        setBanner(err.message, "error");
+      }
+    };
+
+    let currentJobs = [];
+
+    const loadJobs = async () => {
+      try {
+        const res = await fetch("/api/jobs");
+        if (!res.ok) throw new Error("Failed to load jobs");
+        const data = await res.json();
+        currentJobs = data.jobs || [];
+        renderJobs(currentJobs);
+      } catch (err) {
+        setBanner(err.message, "error");
+      }
+    };
+
+    const uploadFile = async (file) => {
+      if (!file || !file.name.toLowerCase().endsWith(".csv")) {
+        setBanner("Please provide a CSV file.", "error");
+        return;
+      }
+      setBanner(`Uploading ${file.name}...`, "info");
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Upload failed");
+        }
+        setBanner(`Job ${data.job?.name || ""} complete.`, "info");
+        await loadJobs();
+        if (data.download_url) {
+          triggerDownload(data.download_url);
+        }
+      } catch (err) {
+        setBanner(err.message, "error");
+      }
+    };
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add("dropzone--active");
+      });
+    });
+
+    ["dragleave", "drop"].forEach((eventName) => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove("dropzone--active");
+      });
+    });
+
+    dropzone.addEventListener("drop", (e) => {
+      const file = e.dataTransfer?.files?.[0];
+      uploadFile(file);
+    });
+
+    dropzone.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      uploadFile(file);
+      fileInput.value = "";
+    });
+
+    jobsList.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-validate]");
+      if (!btn) return;
+      const jobName = btn.getAttribute("data-validate");
+      validateJob(jobName);
+    });
+
+    loadJobs();
+  </script>
+</body>
+</html>

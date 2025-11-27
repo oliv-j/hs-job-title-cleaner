@@ -1,0 +1,35 @@
+# Project Requirements
+
+- Provide two Python scripts: `job_title_cleaning.py` for local/offline bulk cleaning and `custom-code.py` for HubSpot custom coded workflow actions.
+- Provide a local Flask-based web UI/API (`app.py` + `static/index.html`) to run the cleaner via drag-and-drop CSV uploads and manage/download job outputs.
+- Accept job title input as strings (from CSV column locally; from `jobTitle` input field in HubSpot).
+- Clean titles by:
+  - Unescaping HTML entities and trimming whitespace.
+  - Removing leading punctuation/symbols (commas, dashes, spaces, `¨`, backticks), enclosing quotes or parentheses, repeated quotes.
+  - Converting diacritics to ASCII equivalents.
+  - Stripping email addresses.
+  - Filtering out phone-like strings (7+ digits/phone symbols), numeric-only values, single-character values, and strings composed only of punctuation/underscores.
+  - Dropping known junk values (e.g., `n/a`, `no`, `test`, `job title`, `aaa`, spammy tokens).
+  - Uppercasing roman numerals attached to a preceding word (I–IX).
+  - Preserving all-uppercase acronyms in a whitelist (e.g., IT, VP, AIO, APHL); converting `phd` to `PhD`; otherwise title-casing words.
+  - Replacing vertical bars `|` with commas.
+  - Adding spacing around slashes when both sides are 4+ letter words.
+  - Lowercasing `And` only when between words.
+  - Preserving the casing of “Post Doc”.
+- Return empty/null for invalid or removed titles; otherwise output the cleaned string.
+- Web app behaviors:
+  - Drag/drop or file-select CSV (column A) to create a job; jobs auto-process on upload.
+  - Jobs persist to `/jobs/jobs.json`, and each job stores originals/outputs under `/jobs/<job_name>/`.
+  - Job naming pattern: `JobTitleClean###` (incrementing).
+  - Job statuses: `new`, `complete`, `error`; list view with timestamps and download links.
+  - Completed jobs auto-trigger a browser download of the cleaned CSV.
+- HubSpot workflow outputs:
+  - `newTitle`: cleaned title (blank if invalid).
+  - `outcome`: `changed` when a modification occurs; `no_change` otherwise.
+  - `hs_execution_state`: `Succeeded` on change; `Failed, object removed from workflow` on no-change or errors.
+- Local script behaviors:
+  - Input CSV named `job_titles.csv` (single column of job titles, or column renamed to `Original Job Title`).
+  - Outputs `cleaned_job_titles.csv` with `Index`, original column, and `Cleaned Job Title`.
+  - Fills empty cleaned values with blank strings.
+- Dependencies: Python with `pandas`; Flask for the web UI; standard library modules `re`, `html`, `unicodedata`, `pathlib`, `json`, `datetime`.
+- Safety: intended for sandbox/testing first; cleaning may irreversibly remove data; no warranty.
