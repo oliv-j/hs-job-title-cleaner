@@ -1,0 +1,193 @@
+﻿Original Job Title,Cleaned Job Title,Action,New Value
+"""NGS analysis and interpretation of the antiretroviral resistance profile of the HIV-1 virus"".","""NGS Analysis and Interpretation Of The Antiretroviral Resistance Profile Of The HIV-1 Virus"".",Remove punctuation at start and end,NGS Analysis and Interpretation Of The Antiretroviral Resistance Profile Of The HIV-1 Virus
+4a,4A,Remove,
+aa,Aa,Remove,
+abcf,Abcf,Remove,
+adiunct,Adiunct,Expand abbreviation,Adiunct Professor
+adiunkt,Adiunkt,Expand abbreviation,Adiunct Professor
+"Adj. prof, PI","Adj. Prof, PI",Expand abbreviation,"Adiunct Professor, Principle Investigator"
+all,All,Remove,
+AVP,AVP,Expand abbreviation,Assistant vice president
+BDM,BDM,Expand abbreviation,Business development manager
+BIO,BIO,Expand abbreviation,Biologist
+CAO,CAO,Expand abbreviation,Chief analytics officer 
+CBO,CBO,Expand abbreviation,Chief business officer
+CCO,CCO,Expand abbreviation,Chief commercial officer
+CDO,CDO,Expand abbreviation,Chief data officer
+CEO,CEO,Expand abbreviation,Chief executive officer
+CFO,CFO,Expand abbreviation,Chief financial officer
+CIO,CIO,Expand abbreviation,Chief information officer
+CLS,CLS,Expand abbreviation,Clinical laboratory scientist
+CMA,CMA,Expand abbreviation,Certified management accountant
+CMO,CMO,Expand abbreviation,Chief medical officer
+COO,COO,Expand abbreviation,Chief operating officer
+CPO,CPO,Expand abbreviation,Chief product officer
+CRC,CRC,Expand abbreviation,Clinical research coordinator
+CRO,CRO,Expand abbreviation,Chief research officer
+CSM,CSM,Expand abbreviation,Customer success manager
+CSO,CSO,Expand abbreviation,Chief scientific officer
+CTA,CTA,Expand abbreviation,Clinical trial associate
+CTO,CTO,Expand abbreviation,Chief technical/technology officer
+CTS,CTS,Expand abbreviation,Clinical trial specialist
+ddf,Ddf,Remove,
+dev,Dev,Expand abbreviation,Developer
+dff,Dff,Remove,
+Dir,Dir,Expand abbreviation,Director
+do,Do,Remove,
+Doc,Doc,Expand abbreviation,Doctor
+Dr,Dr,Expand abbreviation,Doctor / Doctorate
+Dr.,Dr.,Expand abbreviation,Doctor / Doctorate
+Dude,Dude,Remove,
+DVM,DVM,Expand abbreviation,Doctor of veterinary medicine
+EBER,EBER,Expand abbreviation,Engneer
+EiR,Eir,Expand abbreviation,Entrepreneur in residence
+eng,Eng,Expand abbreviation,Engineer
+Epi,Epi,Expand abbreviation,
+F&E,F&E,Expand abbreviation,
+FSE,FSE,Expand abbreviation,
+GM,GM,Expand abbreviation,General Manager
+God,God,Expand abbreviation,
+GP,GP,Expand abbreviation,General Practitioner
+hh,Hh,Remove,
+Ing,Ing,Expand abbreviation,Engineer
+inv,Inv,Expand abbreviation,Investigator
+IT,IT,Expand abbreviation,Information Technology
+Lab,Lab,Expand abbreviation,Laboratory
+M.D,M.D,Expand abbreviation,Medical Doctor
+MAI,MAI,Expand abbreviation,MAI
+Md,Md,Expand abbreviation,Medical Doctor
+md,Md,Expand abbreviation,Doctor / MD
+MGR,MGR,Expand abbreviation,Manager
+MLA,MLA,Expand abbreviation,Medical laboratory assistant
+MLS,MLS,Expand abbreviation,Medical laboratory scientist
+MLT,MLT,Expand abbreviation,Medical laboratory technologist
+mr,Mr,Remove,
+MSL,MSL,Expand abbreviation,Medical science liaison
+NED,NED,Expand abbreviation,Non-executive director
+Other,Other,Remove,
+P I,P I,Expand abbreviation,Principal investigator
+PA,PA,Expand abbreviation,Physician Assistant 
+PDRA,PDRA,Expand abbreviation,Postdoctoral research associate
+PDRF,PDRF,Expand abbreviation,Postdoctoral research fellow
+PhD,PhD,Expand abbreviation,Doctor of philosophy
+PI,PI,Expand abbreviation,Primary Investigator
+PM,PM,Expand abbreviation,Project Manager
+PMO,PMO,Expand abbreviation,Project management office
+Pr,PR,Expand abbreviation,Professor
+Prof,Prof,Expand abbreviation,Professor
+PS,PS,Expand abbreviation,Project Manager
+QA,QA,Expand abbreviation,QA / QC / QM
+QC,QC,Expand abbreviation,QA / QC / QM
+QM,QM,Expand abbreviation,QA / QC / QM
+R&amp;D,R&D,Expand abbreviation,Research and development
+R&D,R&D,Expand abbreviation,Research and development
+RA,RA,Expand abbreviation,Research Assistant
+RA1,RA1,Expand abbreviation,Research assistant 1
+RA2,RA2,Expand abbreviation,Research assistant 2
+RCO,RCO,Expand abbreviation,Research contracts officer
+Res,Res,Expand abbreviation,Researcher
+RSE,RSE,Expand abbreviation,Research software engineer
+sci,Sci,Expand abbreviation,Scientist
+SRA,SRA,Expand abbreviation,Senior research associate
+SRO,SRO,Expand abbreviation,Senior research officer
+SSO,SSO,Expand abbreviation,Senior scientific officer
+STE,STE,Expand abbreviation,Senior test engineer
+stu,Stu,Expand abbreviation,Student
+SVP,SVP,Expand abbreviation,Senior vice president
+TAM,TAM,Expand abbreviation,Technical account manager
+TAS,TAS,Expand abbreviation,Technical assistant
+Tea,Tea,Expand abbreviation,Teacher
+TEC,TEC,Expand abbreviation,Technician
+Tech,Tech,Expand abbreviation,Technician
+TMM,TMM,Expand abbreviation,Technical marketing manager
+TSM,TSM,Expand abbreviation,Technical support manager
+TSS,TSS,Expand abbreviation,Technical support specialist
+VGM,VGM,Expand abbreviation,Vice general manager
+VP,VP,Expand abbreviation,Vice President
+业务员,业务员,Translate,Salesperson
+主任,主任,Translate,Director
+主管,主管,Translate,Manager
+兽医师,兽医师,Translate,Veterinarian
+内勤,内勤,Translate,Supervisor
+副主任,副主任,Translate,Deputy director
+副所长,副所长,Translate,Deputy institute director
+副教授,副教授,Translate,Associate professor
+副研,副研,Translate,Research Associate
+副组长,副组长,Translate,Deputy group leader
+副總,副總,Translate,Vice President
+副院长,副院长,Translate,Deputy dean
+助教,助教,Translate,Teaching Assistant
+助理,助理,Translate,Assistant
+助研,助研,Translate,Research Assistant
+医师,医师,Translate,Physician
+医師,医師,Translate,Physician
+医生,医生,Translate,Doctor
+博后,博后,Translate,Postdoctoral Researcher
+博士,博士,Translate,PhD
+博士后,博士后,Translate,Postdoctoral researcher
+博士生,博士生,Translate,PhD student
+员工,员工,Translate,Employee
+商务,商务,Translate,Business
+営業,営業,Translate,Sales
+学员,学员,Translate,Student
+学士,学士,Translate,Bachelor’s Degree Holder
+学生,学生,Translate,Student
+學生,學生,Translate,Student
+实习生,实习生,Translate,Intern
+实验员,实验员,Translate,Laboratory technician
+实验师,实验师,Translate,Laboratory technologist
+工程师,工程师,Translate,Engineer
+市场,市场,Translate,Marketing
+干部,干部,Translate,Cadre
+待业,待业,Translate,Unemployed
+总监,总监,Translate,Director
+总经理,总经理,Translate,General manager
+所长,所长,Translate,Director
+技师,技师,Translate,Technician
+技术,技术,Translate,Technology
+技术员,技术员,Translate,Technician
+技术岗,技术岗,Translate,Technical post
+技術員,技術員,Translate,Technician
+提取,提取,Translate,Extraction
+教室,教室,Translate,Classroom
+教师,教师,Translate,Teacher
+教授,教授,Translate,Professor
+本科生,本科生,Translate,Undergraduate student
+检测员,检测员,Translate,Inspector
+检验,检验,Translate,Testing
+检验员,检验员,Translate,Laboratory tester
+检验师,检验师,Translate,Laboratory technologist
+检验科,检验科,Translate,Laboratory department
+法人,法人,Translate,Legal Representative
+测序,测序,Translate,Sequencing
+研助,研助,Translate,Research Assistant
+研发,研发,Translate,Research And Development
+研发员,研发员,Translate,R&D staff
+研究员,研究员,Translate,Researcher
+研究員,研究員,Translate,Researcher
+研究生,研究生,Translate,Graduate student
+研究者,研究者,Translate,Researcher
+研究院,研究院,Translate,Research institute
+硕士生,硕士生,Translate,Master’s student
+社員,社員,Translate,Employee
+科员,科员,Translate,Section Staff
+科学家,科学家,Translate,Scientist
+科研,科研,Translate,Scientific Research
+科研员,科研员,Translate,Research staff
+科长,科长,Translate,Section Chief
+管理员,管理员,Translate,Administrator
+系主任,系主任,Translate,Department head
+组长,组长,Translate,Team Leader
+经理,经理,Translate,Manager
+老师,老师,Translate,Teacher
+职工,职工,Translate,Employee
+药剂师,药剂师,Translate,Pharmacist
+董事长,董事长,Translate,Chairman
+行政,行政,Translate,Administration
+讲师,讲师,Translate,Lecturer
+購物員,購物員,Translate,Purchasing staff
+購買,購買,Translate,Purchasing
+醫檢師,醫檢師,Translate,Medical laboratory scientist
+采购,采购,Translate,Purchasing
+采购员,采购员,Translate,Purchasing staff
+销售,销售,Translate,Sales

@@ -29,7 +29,7 @@ On a test sandbox with 100,000 multi-lingual job title values in business and sc
 - Removed 800 values entirely, made 1,200 major changes and 23,000 minor changes.
 - removed illegal entries like email address, single characters, or where the value was just a special character e.g. * or ! or @
 - removed illegal characters at the start and end of job .
-- ignores data in non-latin character set (e.g. Japanese, Korean, Chinese).
+- translates known non-Latin exact matches (per lookup) and ignores any remaining non-Latin strings.
 - fixed many formatting issues with capitalisation
 - removed entries with multiple repeating characters mixed with other data e.g. "aaaa" or "jooooob title".
 - Preserved data that could be a science roll.
@@ -65,10 +65,12 @@ The code will take the Job Title, clean it and store it as a variable "newTitle"
 =========================
 Summary of cleaning actions:
 =========================
-Ignores non-latin strings (e.g Chinese, Japanese, Russian, Greek etc)
-Removal of leading punctuation, spaces, quotes, or parentheses if the entire value is enclosed.
+Translates known non-Latin exact matches; otherwise ignores non-Latin strings (e.g Chinese, Japanese, Russian, Greek etc)
+Removal of leading/trailing punctuation, spaces, quotes, or parentheses if the entire value is enclosed.
 Diacritics conversion (e.g. “ä” → “a”) instead of discarding foreign text.
 Filtering out numeric-only values, phone-like formats (7+ digits), and known “junk” entries (such as “n/a”, “no”, “test”, etc.).
+Junk list expanded with short noise like `mr`, `do`, `aa`, `4a`, etc.; removes lone `God`.
+Exact-match abbreviation/expansion lookups (e.g. `R&D` → `Research And Development`, `PI` → `Primary Investigator`) before general casing rules.
 Removal of email address.
 Capitalisation rules:
 Preserve certain acronyms in uppercase (e.g. “IT”, “AIO”, “APHL”).
@@ -112,3 +114,4 @@ Run tests and validate that the script is cleaning or ignoring unchanged contact
 
 For more informatino check out the HubSpot KB on custom coded actions:
 https://developers.hubspot.com/docs/reference/api/automation/custom-code-actions
+See `CCA.md` for a concise guide to HubSpot Custom Code Actions (supported libraries, inputs/outputs, limits, and sample code).

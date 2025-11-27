@@ -5,11 +5,13 @@
 - Accept job title input as strings (from CSV column locally; from `jobTitle` input field in HubSpot).
 - Clean titles by:
   - Unescaping HTML entities and trimming whitespace.
-  - Removing leading punctuation/symbols (commas, dashes, spaces, `¨`, backticks), enclosing quotes or parentheses, repeated quotes.
+  - Removing leading/trailing punctuation/symbols (commas, dashes, spaces, quotes, brackets, backticks), enclosing quotes or parentheses, repeated quotes.
   - Converting diacritics to ASCII equivalents.
   - Stripping email addresses.
+  - Translating exact-match non-Latin titles from a lookup table; ignoring any remaining non-Latin strings.
   - Filtering out phone-like strings (7+ digits/phone symbols), numeric-only values, single-character values, and strings composed only of punctuation/underscores.
-  - Dropping known junk values (e.g., `n/a`, `no`, `test`, `job title`, `aaa`, spammy tokens).
+  - Dropping known junk values (e.g., `n/a`, `no`, `test`, `job title`, `aaa`, spammy tokens, short noise like `mr`, `do`, `aa`, `4a`, and lone `god`).
+  - Expanding exact-match abbreviations (e.g., `R&D`, `PI`, `AVP`, `Adj. prof, PI`) before casing.
   - Uppercasing roman numerals attached to a preceding word (I–IX).
   - Preserving all-uppercase acronyms in a whitelist (e.g., IT, VP, AIO, APHL); converting `phd` to `PhD`; otherwise title-casing words.
   - Replacing vertical bars `|` with commas.

@@ -13,15 +13,17 @@ This project is primarily Python logic, so automated tests should focus on `clea
 ## What to Cover
 - **Input validation**: Non-string input returns `None`; empty/whitespace-only strings cleaned to empty; single-character values rejected.
 - **Email & phone filtering**: Email-like and phone-like inputs return `None`.
-- **Junk filtering**: Values in the junk list (e.g., `n/a`, `job title`, `aaa`) return `None`.
+- **Junk filtering**: Values in the junk list (e.g., `n/a`, `job title`, `aaa`, `mr`, `do`, `aa`, `4a`, lone `god`) return `None`.
 - **Diacritics**: “Käse” → “Kase”.
-- **Leading punctuation/quotes**: `" ,-- CTO"` → `CTO`; `"("Researcher")"` → `Researcher`.
+- **Leading/trailing punctuation/quotes**: `" ,-- CTO"` → `CTO`; `"("Researcher")"` → `Researcher`; `"Title".` → `Title`.
+- **Non-Latin handling**: Known translations (exact match) are applied; remaining non-Latin strings are dropped.
 - **Capitalisation rules**: Acronyms preserved (IT, VP, APHL); `phd` → `PhD`; mixed-case words title-cased.
 - **Roman numerals**: `Founder iv` → `Founder IV`.
 - **Vertical bars**: `"Head|Sales"` → `Head, Sales`.
 - **Slash spacing**: `"This/Thing"` → `This / Thing` when both words are 4+ letters.
 - **Lowercasing And**: `"Head And Finance"` → `Head and Finance`.
 - **Post Doc**: Preserves “Post Doc”.
+- **Abbreviation/translation expansion**: `R&D` → `Research And Development`; `PI` → `Primary Investigator`; `Adj. prof, PI` → `Adiunct Professor, Principal Investigator`; `博士` → `Doctor Of Philosophy`.
 - **Outcome flags (HubSpot)**: When cleaned value differs, `outcome=changed` and `hs_execution_state=Succeeded`; when unchanged or invalid, `outcome=no_change` and `hs_execution_state=Failed, object removed from workflow`.
 - **CSV flow**: End-to-end on a small fixture CSV writes `cleaned_job_titles.csv` with expected columns and cleaned values (blank for removed titles).
 
