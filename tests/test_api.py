@@ -31,8 +31,8 @@ def test_upload_and_stats(client):
     payload = resp.get_json()
     assert payload["job"]["status"] == "complete"
     stats = payload["job"]["stats"]
-    assert stats["good"] == 1  # CEO unchanged
-    assert stats["cleaned"] == 1  # cto -> CTO
+    assert stats["good"] == 0  # CEO is expanded, so counts as cleaned
+    assert stats["cleaned"] == 2  # cto -> Chief..., CEO -> Chief...
     assert stats["removed"] == 1  # n/a removed
 
 
@@ -56,3 +56,20 @@ def test_validate_endpoint(client):
     assert data["job"] == job_name
     assert data["changed_rows"] >= 1
     assert isinstance(data.get("sample"), list)
+
+
+def test_validate_with_nonstandard_header(client):
+    data = "Title\ncto\nn/a\nCEO\n"
+    resp = client.post(
+        "/api/upload",
+        data={"file": (io.BytesIO(data.encode()), "sample2.csv")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 200
+    job_name = resp.get_json()["job"]["name"]
+
+    val_resp = client.get(f"/api/validate/{job_name}")
+    assert val_resp.status_code == 200
+    payload = val_resp.get_json()
+    assert payload["job"] == job_name
+    assert payload["changed_rows"] >= 1

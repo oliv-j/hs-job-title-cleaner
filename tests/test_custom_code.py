@@ -6,8 +6,8 @@ import pytest
 
 
 def load_custom_code():
-    """Load custom-code.py despite the hyphen in its filename."""
-    path = Path(__file__).resolve().parent.parent / "custom-code.py"
+    """Load the HubSpot action module from hs-custom_code_action.py."""
+    path = Path(__file__).resolve().parent.parent / "hs-custom_code_action.py"
     loader = importlib.machinery.SourceFileLoader("custom_code", str(path))
     spec = importlib.util.spec_from_loader(loader.name, loader)
     module = importlib.util.module_from_spec(spec)
@@ -21,14 +21,26 @@ custom_code = load_custom_code()
 @pytest.mark.parametrize(
     "raw,expected",
     [
-        ("博士", "Doctor Of Philosophy"),
+        ("博士", "Doctor of Philosophy"),
         ("博士后", "Postdoctoral Researcher"),
         ("R&D", "Research and Development"),
         ("PI", "Primary Investigator"),
         ('"Title".', "Title"),
         ("mr", None),
+        ("Yes", None),
         ("副研", "Research Associate"),
         ("Adj. prof, PI", "Adiunct Professor, Principal Investigator"),
+        ("md", "MD"),
+        ("m.d.", "M.D"),
+        ("VP Of Research", "VP of Research"),
+        ("Technicien De Laboratoire", "Technicien de Laboratoire"),
+        ("Studies On The Cultivation Of Useful Plants", "Studies on the Cultivation of Useful Plants"),
+        ("Tutor & Demonstrater (Clinical Microbiologist", "Tutor & Demonstrater (Clinical Microbiologist"),
+        ("Technical Specialist (Genetics", "Technical Specialist (Genetics"),
+        ("Scientist II (E-T", "Scientist II (E-T"),
+        ("Scientist (Project", "Scientist (Project"),
+        ("Scientist (SS", "Scientist (SS"),
+        ("a@@@@@@@", None),
     ],
 )
 def test_clean_job_title_cases(raw, expected):
@@ -48,14 +60,34 @@ def test_main_no_change_marks_failed():
     output = custom_code.main(event)["outputFields"]
     assert output["newTitle"] == "Director"
     assert output["outcome"] == "no_change"
+    assert output["non_latin_title"] == ""
     assert output["error_state"] == 0
 
 
 def test_main_invalid_passes_original():
     event = {"inputFields": {"jobTitle": "mr"}}
     output = custom_code.main(event)["outputFields"]
-    assert output["newTitle"] == "mr"  # cleaned is None; pass-through original
-    assert output["outcome"] == "no_change"
+    assert output["newTitle"] == ""  # cleaned is None -> removed
+    assert output["non_latin_title"] == ""
+    assert output["outcome"] == "removed"
+    assert output["error_state"] == 0
+
+
+def test_main_non_latin_preserved():
+    raw = "こんにちは"
+    output = custom_code.main({"inputFields": {"jobTitle": raw}})["outputFields"]
+    assert output["outcome"] == "non_latin"
+    assert output["newTitle"] == raw
+    assert output["non_latin_title"] == raw
+    assert output["error_state"] == 0
+
+
+def test_main_punct_only_removed():
+    raw = "—"  # em dash
+    output = custom_code.main({"inputFields": {"jobTitle": raw}})["outputFields"]
+    assert output["outcome"] == "non_latin"
+    assert output["newTitle"] == raw
+    assert output["non_latin_title"] == raw
     assert output["error_state"] == 0
 
 

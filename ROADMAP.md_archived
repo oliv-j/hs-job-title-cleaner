@@ -5,11 +5,12 @@
 - Persisted job metadata (`jobs/jobs.json`) and per-job folders with original and cleaned files.
 - Translation and abbreviation lookup tables (from feedback) with exact-match expansion and updated junk list/punctuation trimming.
 - HubSpot Custom Code Actions reference (`CCA.md`) outlining supported libraries, inputs/outputs, and limits.
+- Pytest coverage for cleaning logic, custom coded action behavior, CSV stats, and API endpoints (with temporary `JOBS_DIR` isolation).
 
 ## To Do / Future Enhancements
-- Add automated tests for cleaning logic, API endpoints, and basic frontend flows.
-- Add a requirements file/lock for consistent environment setup; optional makefile/task runner.
-- Add lightweight secret scan to CI (API key detection).
+- Expand automated tests to cover additional cleaning edge cases, UI interactions, and CSV header validation paths.
+- Add a dependency lock/pinning strategy (pip-tools/uv/poetry) and an optional task runner.
+- Add lightweight secret scan to CI (API key detection) and a simple CI workflow to run tests.
 - Improve CSV header handling/validation (explicit header option, clearer error messages).
 - Add basic UX polish (progress indicator, job filtering) and error-state retries.
-- Add fixtures/tests covering translation/abbreviation lookups and the expanded junk rules.
+- Broaden fixtures for translation/abbreviation lookups and the expanded junk rules; add regression cases for known quirks (ordinals, polite junk phrases).

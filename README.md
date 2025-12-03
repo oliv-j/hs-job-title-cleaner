@@ -1,5 +1,20 @@
 # HubSpot job title cleaner for Operations Hub
 
+Python utilities to normalize job titles locally, through a simple Flask UI, and inside HubSpot custom coded workflow actions.
+
+## Components
+- `job_title_cleaning.py`: Shared cleaning logic plus a CLI that reads a CSV and writes an indexed output with change flags.
+- `app.py` + `static/`: Flask UI/API for drag/drop CSV uploads; jobs are stored under `jobs/` by default.
+- `hs-custom_code_action.py`: HubSpot Operations Hub custom coded action (see `CCA.md` for a concise action reference).
+
+## Repository structure (high level)
+- `app.py`, `job_title_cleaning.py`, `hs-custom_code_action.py` — core app, CLI cleaner, and HubSpot action.
+- `static/` — single-page UI for uploads, job listing, validation samples.
+- `scripts/validate_job.py` — CLI to inspect changed rows for a job.
+- `tests/` — pytest suites for cleaner, API, and HubSpot action.
+- `jobs/` — local storage (metadata, logs, per-job original/cleaned CSVs).
+- `README.md`, `PLAN.md`, `TESTING.md`, `CCA.md` — docs; `requirements.txt` — dependencies.
+
 ## Quick start (local web app)
 - Requires Python 3.10+.
 - From the project root, create/activate a virtual environment and install deps:
@@ -8,110 +23,49 @@
   source .venv/bin/activate
   pip install -r requirements.txt
   ```
-- Start the app and open the UI:
+- Start the app (optionally override storage with `JOBS_DIR=/path/to/jobs`):
   ```bash
   python app.py
   ```
-  Then visit http://localhost:5000
-- Drag/drop a CSV (single column in column A; header optional). A job is created (JobTitleClean###), processed immediately, and the cleaned CSV auto-downloads. Jobs and files persist under `jobs/`.
+  Then visit http://localhost:5000.
+- Drag/drop a CSV (single column; header optional). A job is created (`JobTitleClean###`), processed immediately, and the cleaned CSV auto-downloads. Jobs and files persist under `jobs/`; runs are appended to `jobs/runs.log`.
+- The API also exposes `GET /api/jobs`, `GET /api/download/<job_name>`, and `GET /api/validate/<job_name>` (sample changed rows).
 
 ## Command-line cleaner
-- Place your input CSV as `job_titles.csv` (single column of titles, or a column named `Job Title`).
-- Run `python job_title_cleaning.py` to produce `cleaned_job_titles.csv` with index, original, and cleaned values.
+- Place your input CSV as `job_titles.csv` (single column of titles, or a column named `Job Title` / `Original Job Title`).
+- Run:
+  ```bash
+  python job_title_cleaning.py
+  ```
+  It writes `cleaned_job_titles.csv` with columns `Index`, `Original Job Title`, `Cleaned Job Title`, `Has Changed`, `Removed`, and `Removed Reason`. Removed/invalid titles have blank cleaned values, the original value copied into `Removed`, and a short reason (e.g., `junk_value`, `phone_like`, `non_latin_preserved`, `non_letter_ratio`); a BOM is included for Excel compatibility. Non-Latin values not in the translation map are preserved unchanged and flagged via `Removed Reason` so you can filter them separately.
 
-## HubSpot workflow action
- Cleans Job TItle fields with a Custom coded action (using Python) in HubSpot operations hub 
+## Jobs storage and validation
+- Job folders live under `jobs/` (or `$JOBS_DIR`) with `jobs/jobs.json` metadata. File names follow `JobTitleClean###-original.csv` and `JobTitleClean###-cleaned.csv`.
+- Use `scripts/validate_job.py JobTitleClean001 --jobs-dir jobs` or `GET /api/validate/<job_name>` to inspect changed rows for a run.
 
-This is an early proof of concept test and should be tested first.
+## Testing
+- After installing requirements, run `pytest tests`. See `TESTING.md` for coverage details and recommended cases.
 
-Results
-On a test sandbox with 100,000 multi-lingual job title values in business and science / research sectors, the script:
-- Removed 800 values entirely, made 1,200 major changes and 23,000 minor changes.
-- removed illegal entries like email address, single characters, or where the value was just a special character e.g. * or ! or @
-- removed illegal characters at the start and end of job .
-- translates known non-Latin exact matches (per lookup) and ignores any remaining non-Latin strings.
-- fixed many formatting issues with capitalisation
-- removed entries with multiple repeating characters mixed with other data e.g. "aaaa" or "jooooob title".
-- Preserved data that could be a science roll.
-- preserved all valid data (whoop!)
+## Cleaning rules (summary)
+- Strip leading/trailing punctuation/quotes, enclosing parentheses/quotes/backticks, emails, and repeated quotes.
+- Convert diacritics to ASCII; translate known non-Latin exact matches; drop any remaining non-Latin strings.
+- Remove phone-like strings (7+ digits/symbols), numeric-only values, single characters, punctuation-only strings, and junk tokens (e.g., `n/a`, `mr`, `aaa`, `4a`, `god`, spammy noise).
+- Expand abbreviations (e.g., `R&D` → `Research and Development`, `PI` → `Primary Investigator`) before casing; uppercase roman numerals attached to words.
+- Preserve all-uppercase acronyms in a whitelist (IT, VP, AIO, APHL); convert `phd` to `PhD`; title-case the rest. Lowercase `And` only when between words; preserve `Post Doc`.
+- Replace vertical bars `|` with commas and insert spacing around slashes when both sides are 4+ letter words. Return `None` for invalid results.
 
-What it did not clean or remove, or other issues:
-- Remove values which are strings of jumbled characters (very difficult to figure out if the job title makes sense). e.g. jqocleruair (These were almost always spam where the contact record could be removed using other tests). This is very difficult to do in a multi-lingual way without referencing dictionaries for official words.
-- did not remove properly formated text values which are junk e..g "No thank you"
-- Changed 1st to 1St, 2nd to 2Nd. etc.
+## HubSpot custom coded action
+1. Add a custom coded action in your workflow and choose Python.
+2. Set input key `jobTitle` to the contact’s Job Title field.
+3. Paste the contents of `hs-custom_code_action.py`.
+4. Output keys: `newTitle` (string) and `outcome` (string: `changed`, `no_change`, `removed`, or `non_latin`) plus `non_latin_title` when non-Latin is detected. The script also returns `error`, `error_message`, and `error_state` for visibility. Brackets are preserved (balance-aware trim) to avoid adding/removing parentheses.
+5. Branch on `outcome == "changed"` to write `newTitle` back to the record. When cleaning removes the title entirely, `newTitle` is blank and `outcome` is `removed`. When unchanged, `outcome` is `no_change`. When non-Latin is detected, `newTitle` and `non_latin_title` carry the original and `outcome` is `non_latin`.
 
-Future development / next steps
-After cleaning the data, a call could be made to ChatGPT to ask it to validate any remaining value to see if it is a valid job title.
- 
-=========================
-Overview
-=========================
+## Notes from bulk testing
+- On a test sandbox with ~100k multilingual job titles, the script removed ~800 values, made ~1.2k major changes, and ~23k minor changes.
+- Removes illegal entries such as email addresses, single characters, or values consisting solely of special characters.
+- Translates known non-Latin exact matches per lookup and ignores remaining non-Latin strings.
+- Fixes formatting issues (capitalisation, double spaces, punctuation at start/end) and removes repeated-character junk (e.g., `aaaa`, `jooooob title`).
+- Does not remove gibberish words that still look like text (e.g., `jqocleruair`) or polite rejections (e.g., `No thank you`). Ordinal suffixes like `1st` may become `1St`.
 
-A testing script for a local pythnon environment is also included in job_title_cleaning.py.
-The test script will load a list of job title data from a file you need to prepare called "job_titles.csv". The file should consist of a single column  of job title values.
-It will clean it and output a new file. To make it easy to review this is an indexed list of original values side by side with the cleaned values. 
-
-Anomylous and bad data is removed.
-Extrenous data such as commas and spaces will be removed from the beginning of lines.
-Poorly formmatted data is corrected (Capitalisation, double spaces)
-Values that are phone numbers or just numbers will be removed.
-
- This code should be thoroughly tested before deployment as it could irreversibly delete or damage data.
- Use it in a sandbox environment first.
- No warranty is offered.
-
-The code will take the Job Title, clean it and store it as a variable "newTitle" which needs to be used in a subsequent workflow action to write this back to the jobTitle.
-
-=========================
-Summary of cleaning actions:
-=========================
-Translates known non-Latin exact matches; otherwise ignores non-Latin strings (e.g Chinese, Japanese, Russian, Greek etc)
-Removal of leading/trailing punctuation, spaces, quotes, or parentheses if the entire value is enclosed.
-Diacritics conversion (e.g. “ä” → “a”) instead of discarding foreign text.
-Filtering out numeric-only values, phone-like formats (7+ digits), and known “junk” entries (such as “n/a”, “no”, “test”, etc.).
-Junk list expanded with short noise like `mr`, `do`, `aa`, `4a`, etc.; removes lone `God`.
-Exact-match abbreviation/expansion lookups (e.g. `R&D` → `Research And Development`, `PI` → `Primary Investigator`) before general casing rules.
-Removal of email address.
-Capitalisation rules:
-Preserve certain acronyms in uppercase (e.g. “IT”, “AIO”, “APHL”).
-Convert “phd” to “PhD”.
-Ensure Roman numerals (I–IX) are uppercase when attached to a preceding word.
-Other normalisations:
-Convert vertical bars (|) to commas.
-Only lowercase “And” when found between words.
-Keep “Post Doc” from becoming fully uppercase.
-Return empty if the final string is invalid.
-
-=============
-How to set up in HubSpot
-=============
-Step 1: Triggers
-You can set this to run when a contact is created, or when the job title field is changed.
-You could also set it to run periodically. You will need to set contact to re-enroll.
-
-For testing leave this as manual enrollment and allow contacts to re-enroll.
-
-Step 2: get the Job Title property value and clean it.
-Add the custom coded workflow action in a hubspot workflow
-Select Python as the scripting language
-Set "jobTitle" as a input key and select the Job Title field for the contact record.
-Get the contents of custom-code.py
-For output keys:
-"newTitle" as a string datatype.
-"outcome" as a string datatype.
-
-Step 3: write the cleaned value back to the job Title field
-The script will set "outcome" as "no_change" if no change has been made to the job title, and "success" if it has been cleaned.
-You can use this data to only write changes back to contact records where the data has been cleaned
-Create a single branch but change the top drop-down from "enrolled contact" to "Action Outcomes" and then select "outcome".
-Set the logic to "is equal to" and the value to "changed" and save it.
-In the success branch add another action. The action type shoud be CRM - edit record.
-Select the Job Title property and then select "newTitle" for the property.
-
-Save and enable the workflow
-
-Run tests and validate that the script is cleaning or ignoring unchanged contacts.
-
-For more informatino check out the HubSpot KB on custom coded actions:
-https://developers.hubspot.com/docs/reference/api/automation/custom-code-actions
-See `CCA.md` for a concise guide to HubSpot Custom Code Actions (supported libraries, inputs/outputs, limits, and sample code).
+Future idea: After cleaning, call a model to validate any remaining value as a plausible job title.

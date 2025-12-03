@@ -1,16 +1,21 @@
 # Testing Strategy
 
-This project is primarily Python logic, so automated tests should focus on `clean_job_title` behavior, CSV I/O flow, HubSpot wrapper behavior, and secret leakage checks.
+Automated tests focus on `clean_job_title` behavior, CSV I/O, the HubSpot wrapper, and API endpoints. Manual checks help validate real job files.
 
-## Tooling
-- Python 3.10+ with `pytest` and `pandas`.
-- Optionally `bandit` or simple regex scans to detect hard-coded secrets/API keys.
+## Setup
+- Python 3.10+ with `pytest` and `pandas` installed (e.g., `pip install -r requirements.txt`).
+- Tests set `JOBS_DIR` to a temporary folder, so they will not touch your local `jobs/` directory.
 
-## Test Commands
-- Unit tests: `pytest tests`
-- Secret scan (lightweight): `python scripts/check_secrets.py`
+## Commands
+- Automated tests: `pytest tests`
+- Optional quick scan for obvious secrets (no bundled script yet): run your preferred scanner or use a simple regex with `rg --pcre2 "sk-[A-Za-z0-9]{32,}|ghp_[A-Za-z0-9]{36,}|AKIA[0-9A-Z]{16}"`.
 
-## What to Cover
+## Existing suites
+- `tests/test_clean_csv_stats.py`: Validates CSV stats, output columns (`Has Changed`), and index insertion.
+- `tests/test_api.py`: Upload/list/validate endpoints using a temp `JOBS_DIR`.
+- `tests/test_custom_code.py`: Ensures cleaning cases, `main(event)` outputs, and error handling for the HubSpot action.
+
+## What to cover (unit/integration)
 - **Input validation**: Non-string input returns `None`; empty/whitespace-only strings cleaned to empty; single-character values rejected.
 - **Email & phone filtering**: Email-like and phone-like inputs return `None`.
 - **Junk filtering**: Values in the junk list (e.g., `n/a`, `job title`, `aaa`, `mr`, `do`, `aa`, `4a`, lone `god`) return `None`.
@@ -24,32 +29,12 @@ This project is primarily Python logic, so automated tests should focus on `clea
 - **Lowercasing And**: `"Head And Finance"` → `Head and Finance`.
 - **Post Doc**: Preserves “Post Doc”.
 - **Abbreviation/translation expansion**: `R&D` → `Research And Development`; `PI` → `Primary Investigator`; `Adj. prof, PI` → `Adiunct Professor, Principal Investigator`; `博士` → `Doctor Of Philosophy`.
-- **Outcome flags (HubSpot)**: When cleaned value differs, `outcome=changed` and `hs_execution_state=Succeeded`; when unchanged or invalid, `outcome=no_change` and `hs_execution_state=Failed, object removed from workflow`.
+- **Outcome flags (HubSpot)**: When cleaned value differs, `outcome=changed`; when unchanged, `outcome=no_change`; when cleaning removes the title entirely, `outcome=removed`; when non-Latin is detected (not in the translation map), `outcome=non_latin` and `non_latin_title` is populated; exceptions produce `outcome=error` and set `error_state=1`. Brackets are preserved with balance-aware trimming (no auto-closing).
 - **CSV flow**: End-to-end on a small fixture CSV writes `cleaned_job_titles.csv` with expected columns and cleaned values (blank for removed titles).
 
-## Suggested Test Layout
-- `tests/test_clean_job_title.py`: Unit tests for pure function behavior (use parametrized cases per above).
-- `tests/test_custom_code.py`: Tests `main(event)` with mocked events to assert outputs and states.
-- `tests/test_cli_flow.py`: Optional integration test that writes a temporary CSV, runs `job_title_cleaning.py` via a subprocess, and checks the output CSV.
+## Manual checks
+- Run `python job_title_cleaning.py` on a small CSV to confirm the output and `Has Changed` flags.
+- For the web app, upload a CSV, then call `GET /api/validate/<job_name>` or run `python scripts/validate_job.py JobTitleClean001 --jobs-dir jobs` to inspect changed rows.
 
-## Example Parametrized Cases
-- (`"Käse"`, `"Kase"`)
-- (`"john@example.com"`, `None`)
-- (`"+1 (212) 555-1234"`, `None`)
-- (`"n/a"`, `None`)
-- (`"aaaa"`, `None`)
-- (`"phd researcher"`, `"PhD Researcher"`)
-- (`"cto"` , `"CTO"`)
-- (`"founder iv"`, `"Founder IV"`)
-- (`"Chief|Revenue"` , `"Chief, Revenue"`)
-- (`"This/Thing"` , `"This / Thing"`)
-- (`"Head And Finance"` , `"Head and Finance"`)
-- (`"Post Doc fellow"` , `"Post Doc Fellow"`)
-- (`"\"Researcher\""` , `"Researcher"`)
-
-## Secret/API Key Checks
-- Add a simple scan to fail CI if likely secrets are committed. Example detection patterns:
-  - Generic: strings matching `[A-Za-z0-9]{32,}` not in a safe allowlist.
-  - Common prefixes: `sk-` (OpenAI), `AKIA` (AWS), `ghp_` (GitHub), `xoxb-` (Slack).
-- Keep an allowlist for known-safe test tokens if needed.
-- Run scan in CI before tests or as a separate job.
+## Secret/API key checks
+- No dedicated script is included yet; add a lightweight scanner in CI to fail on likely secrets (e.g., `[A-Za-z0-9]{32,}` not in an allowlist, and common prefixes such as `sk-`, `AKIA`, `ghp_`, `xoxb-`).

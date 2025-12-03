@@ -6,16 +6,25 @@ phone_pattern = re.compile(r'^\+?[0-9()\s\-]{7,}$')
 roman_pattern = re.compile(r'(\b[A-Za-z]+[ -])(i{1,3}|iv|vi{1,3}|ix)\b', re.IGNORECASE)
 email_pattern = re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', re.IGNORECASE)
 non_latin_pattern = re.compile(r'[^\x00-\x7F]')
+punct_only_pattern = re.compile(r'[-_. \u2013\u2014]+$')
 
 junk_values = {
     "job", "job title",
     "test", "n/a", "none", "unknown", "???", "---", "-", "_", "zzz", "vmeinupi", "vivvixza",
     "vivvviio", "vkodhyqc", "aaa", "aaaa", "aaaaa", "aaaaaa", "aaaaaaaab", "aaaaaaaaab", "abc", "youknowwho",
     "who?", "no", "no response", "no title", "nobody", "no job title", "nil", "na", "aa", "abcf", "all",
-    "ddf", "dff", "do", "dude", "hh", "mr", "other", "4a", "god"
+    "ddf", "dff", "do", "dude", "hh", "mr", "other", "4a", "god", "miss", "self", "xs", "xx", "xxx", "yes", "sale", "team", "temp", "staff",
+    "troublemaker", "testing", "wage earner",
 }
 
-preserve_caps = {"IS", "IT", "IR", "IP", "PI", "PM", "PR", "PhD", "VP", "AIO", "AIOS", "APHL"}
+preserve_caps = {"IS", "IT", "IR", "IP", "PI", "PM", "PR", "PhD", "VP", "AIO", "AIOS", "APHL", "MD"}
+lower_middle_words = {"the", "at", "of", "in", "de", "en", "on"}
+def high_noise_ratio(text: str) -> bool:
+    total = len(text)
+    if total <= 5:
+        return False
+    non_letters = sum(1 for ch in text if not (ch.isalpha() or ch.isspace()))
+    return (non_letters / total) > 0.75
 
 translation_map = {
     "业务员": "Salesperson",
@@ -147,9 +156,10 @@ abbreviation_map = {
     "inv": "Investigator",
     "it": "Information technology",
     "lab": "Laboratory",
-    "m.d": "Medical doctor",
+    "m.d": "M.D",
+    "m.d.": "M.D",
     "mai": "MAI",
-    "md": "Medical doctor",
+    "md": "MD",
     "mgr": "Manager",
     "mla": "Medical laboratory assistant",
     "mls": "Medical laboratory scientist",
@@ -205,36 +215,50 @@ def roman_to_upper(m):
     return m.group(1) + m.group(2).upper()
 
 def strip_edge_punctuation(t):
+    if not t:
+        return t
+    pairs = {"(": ")", "[": "]", "{": "}", "<": ">"}
+    # If we see a bracket opener at start or closer at end, do not drop it; just trim outside.
+    left = t[0] in pairs
+    right = any(t.endswith(v) for v in pairs.values())
+    if left or right:
+        return t.strip(' \t\n\r"\'`“”‘’.,;:!?-')
     t = re.sub(r'^[\s"\'`“”‘’.,;:!?()\[\]{}<>-]+', '', t)
     t = re.sub(r'[\s"\'`“”‘’.,;:!?()\[\]{}<>-]+$', '', t)
     return t
 
-def clean_job_title(title):
+def clean_job_title_with_reason(title):
     if not isinstance(title, str):
-        return None
+        return None, "non_string"
 
     t = html.unescape(title.strip())
     t = strip_edge_punctuation(t)
     t = re.sub(r'^"(.*)"$', r'\1', t)
-    t = re.sub(r'^\((.*)\)$', r'\1', t)
     t = re.sub(r'^`+', '', t)
     t = re.sub(r'"{2,}', '', t)
     t = remove_diacritics(t)
     t = email_pattern.sub('', t).strip()
     if not t:
-        return None
+        return None, "empty"
 
     translated = translation_map.get(t.lower())
     if translated is not None:
         t = translated
-    elif non_latin_pattern.search(t):
-        return None
 
-    if phone_pattern.fullmatch(t) or t.isdigit() or re.fullmatch(r'[-_. ]+', t) or len(t) == 1:
-        return None
+    # Preserve non-Latin if not translated.
+    if non_latin_pattern.search(t):
+        return t, "non_latin"
 
+    if phone_pattern.fullmatch(t):
+        return None, "phone_like"
+    if t.isdigit():
+        return None, "numeric"
+    if punct_only_pattern.fullmatch(t):
+        return None, "punct_only"
+    if len(t) == 1:
+        return None, "too_short"
     if t.lower() in junk_values:
-        return None
+        return None, "junk_value"
 
     expanded = abbreviation_map.get(t.lower())
     if expanded is not None:
@@ -246,11 +270,16 @@ def clean_job_title(title):
     # Convert to words, preserve uppercase acronyms
     words = t.split()
     final_words = []
-    for w in words:
+    total = len(words)
+    for idx, w in enumerate(words):
+        lower_w = w.lower()
+        if 0 < idx < total - 1 and lower_w in lower_middle_words:
+            final_words.append(lower_w)
+            continue
         if w.isupper() or w.upper() in preserve_caps:
-            final_words.append("PhD" if w.lower() == "phd" else w.upper())
+            final_words.append("PhD" if lower_w == "phd" else w.upper())
         else:
-            final_words.append("PhD" if w.lower() == "phd" else w.title())
+            final_words.append("PhD" if lower_w == "phd" else w.title())
     t = ' '.join(final_words)
 
     # Replace vertical bars
@@ -268,23 +297,56 @@ def clean_job_title(title):
     # Preserve 'Post Doc'
     t = re.sub(r'\bPost Doc\b', 'Post Doc', t, flags=re.IGNORECASE)
 
-    t = strip_edge_punctuation(t)
-    return t or None
+    t = re.sub(r'^[\s"\'`“”‘’.,;:!?-]+', '', t)
+    t = re.sub(r'[\s"\'`“”‘’.,;:!?-]+$', '', t)
+    if t and high_noise_ratio(t):
+        return None, "non_letter_ratio"
+    return (t or None), ("" if t else "invalid_final")
+
+
+def clean_job_title(title):
+    cleaned, _ = clean_job_title_with_reason(title)
+    return cleaned
 
 
 def main(event):
     try:
         job_title = event.get("inputFields", {}).get("jobTitle", "")
-        cleaned = clean_job_title(job_title)
-        # Always return a value: cleaned if present, otherwise the original input.
-        final = cleaned if cleaned is not None else (job_title if isinstance(job_title, str) else "")
+        if not isinstance(job_title, str):
+            job_title = ""
+        cleaned, reason = clean_job_title_with_reason(job_title)
 
-        changed = cleaned is not None and cleaned != job_title
+        if reason == "non_latin":
+            return {
+                "outputFields": {
+                    "newTitle": job_title,
+                    "non_latin_title": job_title,
+                    "outcome": "non_latin",
+                    "error": "",
+                    "error_message": "",
+                    "error_state": 0,
+                }
+            }
+
+        if cleaned is None or cleaned == "":
+            return {
+                "outputFields": {
+                    "newTitle": "",
+                    "non_latin_title": "",
+                    "outcome": "removed",
+                    "error": "",
+                    "error_message": "",
+                    "error_state": 0,
+                }
+            }
+
+        changed = cleaned != job_title
         outcome = "changed" if changed else "no_change"
 
         return {
             "outputFields": {
-                "newTitle": final,
+                "newTitle": cleaned,
+                "non_latin_title": "",
                 "outcome": outcome,
                 "error": "",
                 "error_message": "",
@@ -298,6 +360,7 @@ def main(event):
         return {
             "outputFields": {
                 "newTitle": "",
+                "non_latin_title": "",
                 "outcome": "error",
                 "error": msg,
                 "error_message": msg[:300],

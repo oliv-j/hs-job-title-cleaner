@@ -8,6 +8,7 @@ phone_pattern = re.compile(r'^\+?[0-9()\s\-]{7,}$')
 roman_pattern = re.compile(r'(\b[A-Za-z]+[ -])(i{1,3}|iv|vi{1,3}|ix)\b', re.IGNORECASE)
 email_pattern = re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', re.IGNORECASE)
 non_latin_pattern = re.compile(r'[^\x00-\x7F]')
+punct_only_pattern = re.compile(r'[-_. \u2013\u2014]+$')
 
 junk_values = {
     "job", "job title",
@@ -15,10 +16,18 @@ junk_values = {
     "vivvviio", "vkodhyqc", "aaa", "aaaa", "aaaaa", "aaaaaa", "aaaaaaaab", "aaaaaaaaab",
     "abc", "youknowwho", "who?", "no", "no response", "no title", "nobody", "no job title",
     "nil", "na", "aa", "abcf", "all", "ddf", "dff", "do", "dude", "hh", "mr", "other", "4a",
-    "god"
+    "god", "miss", "self", "xs", "xx", "xxx", "yes", "sale", "team", "temp", "staff",
+    "troublemaker", "testing", "wage earner",
 }
 
-preserve_caps = {"IS", "IT", "IR", "IP", "PI", "PM", "PR", "PhD", "VP", "AIO", "AIOS", "APHL"}
+preserve_caps = {"IS", "IT", "IR", "IP", "PI", "PM", "PR", "PhD", "VP", "AIO", "AIOS", "APHL", "MD"}
+lower_middle_words = {"the", "at", "of", "in", "de", "en", "on"}
+def high_noise_ratio(text: str) -> bool:
+    total = len(text)
+    if total <= 5:
+        return False
+    non_letters = sum(1 for ch in text if not (ch.isalpha() or ch.isspace()))
+    return (non_letters / total) > 0.75
 
 translation_map = {
     "业务员": "Salesperson",
@@ -150,9 +159,10 @@ abbreviation_map = {
     "inv": "Investigator",
     "it": "Information technology",
     "lab": "Laboratory",
-    "m.d": "Medical doctor",
+    "m.d": "M.D",
+    "m.d.": "M.D",
     "mai": "MAI",
-    "md": "Medical doctor",
+    "md": "MD",
     "mgr": "Manager",
     "mla": "Medical laboratory assistant",
     "mls": "Medical laboratory scientist",
@@ -208,35 +218,51 @@ def roman_to_upper(m):
     return m.group(1) + m.group(2).upper()
 
 def strip_edge_punctuation(t):
+    if not t:
+        return t
+    pairs = {"(": ")", "[": "]", "{": "}", "<": ">"}
+    # If we see a bracket opener at start or closer at end, do not drop it; just trim outside.
+    left = t[0] in pairs
+    right = any(t.endswith(v) for v in pairs.values())
+    if left or right:
+        return t.strip(' \t\n\r"\'`“”‘’.,;:!?-')
+    # No brackets, fall back to generic trim.
     t = re.sub(r'^[\s"\'`“”‘’.,;:!?()\[\]{}<>-]+', '', t)
     t = re.sub(r'[\s"\'`“”‘’.,;:!?()\[\]{}<>-]+$', '', t)
     return t
 
-def clean_job_title(title):
+def clean_job_title_with_reason(title):
     if not isinstance(title, str):
-        return None
+        return None, "non_string"
 
     t = html.unescape(title.strip())
     t = strip_edge_punctuation(t)
     t = re.sub(r'^"(.*)"$', r'\1', t)
-    t = re.sub(r'^\((.*)\)$', r'\1', t)
     t = re.sub(r'^`+', '', t)
     t = re.sub(r'"{2,}', '', t)
     t = remove_diacritics(t)
     t = email_pattern.sub('', t).strip()
     if not t:
-        return None
+        return None, "empty"
 
     translated = translation_map.get(t.lower())
     if translated is not None:
         t = translated
-    elif non_latin_pattern.search(t):
-        return None
 
-    if phone_pattern.fullmatch(t) or t.isdigit() or re.fullmatch(r'[-_. ]+', t) or len(t) == 1:
-        return None
+    # Preserve non-Latin content but flag it for downstream filtering.
+    if non_latin_pattern.search(t):
+        return t, "non_latin_preserved"
+
+    if phone_pattern.fullmatch(t):
+        return None, "phone_like"
+    if t.isdigit():
+        return None, "numeric"
+    if punct_only_pattern.fullmatch(t):
+        return None, "punct_only"
+    if len(t) == 1:
+        return None, "too_short"
     if t.lower() in junk_values:
-        return None
+        return None, "junk_value"
 
     expanded = abbreviation_map.get(t.lower())
     if expanded is not None:
@@ -246,11 +272,16 @@ def clean_job_title(title):
 
     words = t.split()
     final = []
-    for w in words:
+    total = len(words)
+    for idx, w in enumerate(words):
+        lower_w = w.lower()
+        if 0 < idx < total - 1 and lower_w in lower_middle_words:
+            final.append(lower_w)
+            continue
         if w.isupper() or w.upper() in preserve_caps:
-            final.append("PhD" if w.lower() == "phd" else w.upper())
+            final.append("PhD" if lower_w == "phd" else w.upper())
         else:
-            final.append("PhD" if w.lower() == "phd" else w.title())
+            final.append("PhD" if lower_w == "phd" else w.title())
     t = ' '.join(final)
 
     t = re.sub(r'\s*\|\s*', ', ', t)
@@ -261,59 +292,94 @@ def clean_job_title(title):
     t = re.sub(r'(\b\w+)\s+And\s+(\w+\b)', replace_and, t)
 
     t = re.sub(r'\bPost Doc\b', 'Post Doc', t, flags=re.IGNORECASE)
-    t = strip_edge_punctuation(t)
-    return t or None
+    # Final light trim of edge punctuation/spaces (do not alter bracket pairs already handled).
+    t = re.sub(r'^[\s"\'`“”‘’.,;:!?-]+', '', t)
+    t = re.sub(r'[\s"\'`“”‘’.,;:!?-]+$', '', t)
+    if t and high_noise_ratio(t):
+        return None, "non_letter_ratio"
+    return (t or None), ("" if t else "invalid_final")
+
+
+def clean_job_title(title):
+    cleaned, _ = clean_job_title_with_reason(title)
+    return cleaned
 
 
 def clean_csv_file(input_csv, output_csv):
     """
-    Clean a CSV file and write output with index, original, cleaned, and change flag columns.
+    Clean a CSV file and write output with index, original, cleaned, change flag, removed, and removed reason columns.
     Returns (output_path, stats).
     """
     input_path = Path(input_csv)
     output_path = Path(output_csv)
 
-    df = pd.read_csv(input_path)
+    df = pd.read_csv(input_path, dtype=str, keep_default_na=False)
     if df.empty:
         raise ValueError("Uploaded file is empty")
 
-    if "Job Title" in df.columns and "Original Job Title" not in df.columns:
+    if "Original Job Title" in df.columns:
+        col_to_clean = "Original Job Title"
+    elif "Job Title" in df.columns:
         df.rename(columns={"Job Title": "Original Job Title"}, inplace=True)
-
-    col_to_clean = "Original Job Title" if "Original Job Title" in df.columns else df.columns[0]
+        col_to_clean = "Original Job Title"
+    else:
+        first_col = df.columns[0]
+        df.rename(columns={first_col: "Original Job Title"}, inplace=True)
+        col_to_clean = "Original Job Title"
     stats = {"total_rows": 0, "good": 0, "cleaned": 0, "removed": 0}
 
     cleaned_series = []
     changed_flags = []
+    removed_values = []
+    removed_reasons = []
     for val in df[col_to_clean]:
         stats["total_rows"] += 1
         original = "" if not isinstance(val, str) else val.strip()
-        cleaned = clean_job_title(original)
+        cleaned, removed_reason = clean_job_title_with_reason(original)
         if cleaned is None or cleaned == "":
             stats["removed"] += 1
             cleaned_series.append("")
             changed_flags.append(True)
+            removed_values.append(original)
+            removed_reasons.append(removed_reason or "removed")
+        elif removed_reason == "non_latin_preserved":
+            stats["good"] += 1
+            cleaned_series.append(cleaned)
+            changed_flags.append(False)
+            removed_values.append("")
+            removed_reasons.append(removed_reason)
         elif cleaned == original:
             stats["good"] += 1
             cleaned_series.append(cleaned)
             changed_flags.append(False)
+            removed_values.append("")
+            removed_reasons.append("")
         else:
             stats["cleaned"] += 1
             cleaned_series.append(cleaned)
             changed_flags.append(True)
+            removed_values.append("")
+            removed_reasons.append("")
 
-    df["Cleaned Job Title"] = cleaned_series
-    df["Has Changed"] = changed_flags
+    output_df = pd.DataFrame(
+        {
+            "Index": range(1, len(df) + 1),
+            "Original Job Title": df[col_to_clean],
+            "Cleaned Job Title": cleaned_series,
+            "Has Changed": changed_flags,
+            "Removed": removed_values,
+            "Removed Reason": removed_reasons,
+        }
+    )
 
-    if "Index" not in df.columns:
-        df.insert(0, "Index", range(1, len(df)+1))
-
-    df["Cleaned Job Title"] = df["Cleaned Job Title"].fillna("")
-    df.to_csv(
+    output_df["Cleaned Job Title"] = output_df["Cleaned Job Title"].fillna("")
+    output_df["Removed"] = output_df["Removed"].fillna("")
+    output_df["Removed Reason"] = output_df["Removed Reason"].fillna("")
+    output_df.to_csv(
         output_path,
         index=False,
         encoding="utf-8-sig",  # BOM for better Excel compatibility
-        columns=["Index", col_to_clean, "Cleaned Job Title", "Has Changed"],
+        columns=["Index", "Original Job Title", "Cleaned Job Title", "Has Changed", "Removed", "Removed Reason"],
     )
     return output_path, stats
 
