@@ -18,6 +18,7 @@ junk_values = {
     "nil", "na", "aa", "abcf", "all", "ddf", "dff", "do", "dude", "hh", "mr", "other", "4a",
     "god", "miss", "self", "xs", "xx", "xxx", "yes", "sale", "team", "temp", "staff",
     "troublemaker", "testing", "wage earner",
+    "null", "none", "non", "jobtitle", "job title", "job title", "individual",
 }
 
 preserve_caps = {"IS", "IT", "IR", "IP", "PI", "PM", "PR", "PhD", "VP", "AIO", "AIOS", "APHL", "MD"}

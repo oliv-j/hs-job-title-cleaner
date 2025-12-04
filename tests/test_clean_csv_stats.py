@@ -1,7 +1,7 @@
 import csv
 from pathlib import Path
 
-from job_title_cleaning import clean_csv_file
+from job_title_cleaning import clean_csv_file, clean_job_title
 
 
 def test_clean_csv_file_stats(tmp_path: Path):
@@ -51,3 +51,32 @@ def test_clean_csv_file_stats(tmp_path: Path):
     assert lines[5][3] == "False"
     assert lines[5][4] == ""
     assert lines[5][5] == "non_latin_preserved"
+
+
+def test_fixture_data_matches_expected():
+    data_path = Path(__file__).parent / "test_data.csv"
+    mismatches = []
+    matches = 0
+    total = 0
+    with data_path.open(encoding="utf-8-sig", newline="") as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if not row:
+                continue
+            if len(row) == 1 and "\t" in row[0]:
+                raw, expected = row[0].split("\t", 1)
+            else:
+                raw = row[0]
+                expected = row[1] if len(row) > 1 else ""
+            cleaned = clean_job_title(raw)
+            cleaned_norm = "" if cleaned is None else cleaned
+            expected_norm = expected.strip()
+            if cleaned_norm == expected_norm:
+                matches += 1
+            else:
+                mismatches.append((raw, cleaned_norm, expected_norm))
+            total += 1
+
+    assert total > 0
+    accuracy = matches / total
+    assert accuracy >= 0.95, f"Fixture accuracy {accuracy:.2%}; mismatches (up to 5): {mismatches[:5]}"

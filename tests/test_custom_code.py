@@ -47,6 +47,29 @@ def test_clean_job_title_cases(raw, expected):
     assert custom_code.clean_job_title(raw) == expected
 
 
+def _is_bracket_balanced(text: str) -> bool:
+    pairs = {")": "(", "]": "[", "}": "{", ">": "<"}
+    stack = []
+    for ch in text:
+        if ch in pairs.values():
+            stack.append(ch)
+        elif ch in pairs:
+            if not stack or stack.pop() != pairs[ch]:
+                return False
+    return not stack
+
+
+def test_balanced_brackets_preserved():
+    cases = [
+        "Technical Product Manager (Sequencing Devices)",
+        "Lead Scientist [Genomics Platform]",
+        "Engineer {R&D Team}",
+    ]
+    for raw in cases:
+        cleaned = custom_code.clean_job_title(raw)
+        assert _is_bracket_balanced(cleaned)
+
+
 def test_main_changed():
     event = {"inputFields": {"jobTitle": "R&D"}}
     output = custom_code.main(event)["outputFields"]
