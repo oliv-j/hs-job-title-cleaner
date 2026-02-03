@@ -23,6 +23,7 @@ junk_values = {
 
 preserve_caps = {"IS", "IT", "IR", "IP", "PI", "PM", "PR", "PhD", "VP", "AIO", "AIOS", "APHL", "MD"}
 lower_middle_words = {"the", "at", "of", "in", "de", "en", "on"}
+ordinal_suffixes = {"1": "st", "2": "nd", "3": "rd"}
 def high_noise_ratio(text: str) -> bool:
     total = len(text)
     if total <= 5:
@@ -211,6 +212,191 @@ abbreviation_map = {
     "vp": "Vice president",
 }
 
+misspelling_entries = [
+    ("Co-Ordinator", "Coordinator", "partial"),
+    ("Labtechician", "Laboratory Technician", "partial"),
+    ("Lanoratory ", "Laboratory ", "partial"),
+    ("Laobratory ", "Laboratory ", "partial"),
+    ("Laoratory ", "Laboratory ", "partial"),
+    ("Sientist", "Scientist", "partial"),
+    ("Lecteur", "Lecturer", "partial"),
+    ("Lector", "Lecturer", "partial"),
+    ("Lectrurer", "Lecturer", "partial"),
+    ("Lectuer", "Lecturer", "partial"),
+    ("Lecturar", "Lecturer", "partial"),
+    ("Lecture", "Lecturer", "partial"),
+    ("Life Science ", "Life Sciences ", "partial"),
+    ("Microbilogest", "Microbiologist", "full"),
+    ("Microbilogist", "Microbiologist", "full"),
+    ("Microbiolgist", "Microbiologist", "full"),
+    ("Microbiologa", "Microbiologist", "full"),
+    ("Microbiologia", "Microbiologist", "full"),
+    ("Microbiologiest", "Microbiologist", "full"),
+    ("Microbiologis", "Microbiologist", "full"),
+    ("Microbiologista", "Microbiologist", "full"),
+    ("Microbiologiste", "Microbiologist", "full"),
+    ("Microbiologo", "Microbiologist", "full"),
+    ("Moelcualr ", "Molecular ", "partial"),
+    ("Moelcular ", "Molecular ", "partial"),
+    ("MS Student", "M.Sc student", "partial"),
+    ("Reearch", "Research", "partial"),
+    ("STUDEND", "Student", "partial"),
+    ("Studennt", "Student", "partial"),
+    ("Studen ", "Student", "partial"),
+]
+
+abbreviation_entries = [
+    ("A. Prof", "Associate professor", "partial"),
+    ("A/Prof", "Associate professor", "partial"),
+    ("A Prof", "Associate professor", "partial"),
+    ("A Professor", "Associate professor", "partial"),
+    ("A.Professor", "Associate professor", "partial"),
+    ("A/Professor", "Associate professor", "partial"),
+    ("Prof ", "Professor ", "partial"),
+    ("Exec ", "Executive ", "partial"),
+    ("Exec.", "Executive ", "partial"),
+    ("A/Senior", "Acting Senior", "partial"),
+    ("Mfg", "Manufacturing", "partial"),
+    ("AAI", "Administrative Assistant I", "partial"),
+    ("AA I", "Administrative Assistant I", "partial"),
+    ("AAII", "Administrative Assistant II", "partial"),
+    ("AA II", "Administrative Assistant II", "partial"),
+    ("AAIII", "Administrative Assistant III", "partial"),
+    ("AA III", "Administrative Assistant III", "partial"),
+    ("Sr ", "Senior ", "partial"),
+    ("Sr.", "Senior ", "partial"),
+    ("Jr ", "Junior ", "partial"),
+    ("Jr.", "Junior ", "partial"),
+    ("LA", "Laboratory Assistant", "partial"),
+    ("Tech", "Technician", "partial"),
+    ("Lab Assist", "Laboratory Assistant", "partial"),
+    ("Lab Asst", "Laboratory Assistant", "partial"),
+    ("Lab ", "Laboratory ", "partial"),
+    ("Labtech", "Laboratory Technician", "partial"),
+    ("Labtechnician", "Laboratory Technician", "partial"),
+    ("Lab Coordinator", "Laboratory Coordinator", "partial"),
+    ("Lan Manager", "Laboratory Technician", "partial"),
+    ("Lan Technician", "Laboratory Technician", "partial"),
+    ("Life Sci Tech", "Life Sciences Technician", "partial"),
+    ("DEPT. MANAGER", "Department Manager", "partial"),
+    ("M.S.C ", "M.Sc", "partial"),
+    ("Master Course", "Masters Course", "partial"),
+    ("Master Degree", "Masters Degree", "partial"),
+    ("Master Student", "Masters Student", "partial"),
+    ("Mech Eng", "Mechanical Engineer", "partial"),
+    ("Medic Specialist", "Medical Specialist", "partial"),
+    ("GRA", "Graduate Research Assistant", "partial"),
+    ("Med Lab Tech", "Medical laboratory technician", "partial"),
+    ("MED TECH", "Medical technologist", "partial"),
+    ("Med. Biologas", "Medical biologist", "partial"),
+    ("Med. Tech. Assistant", "Medical technical assistant", "partial"),
+    ("Med. Technologist", "Medical technologist", "partial"),
+    ("Medecin Biologiste", "Medical biologist", "partial"),
+    ("Medical Labtech", "Medical laboratory technician", "partial"),
+    ("Mgr Inz", "Magister Inżynier", "full"),
+    ("Micro", "Microbiologist", "full"),
+    ("Micro Molecular", "Microbiology and molecular biology", "partial"),
+    ("Micro Tech", "Microbiology technician", "partial"),
+    ("Micro- And Molecular Biology", "Microbiology and molecular biology", "partial"),
+    ("Microbio ", "Microbiologist ", "partial"),
+    ("Microbiologis ", "Microbiologist ", "partial"),
+    ("Microbiologo Molecular", "Microbiology and molecular biology", "full"),
+    ("Mol. Lab. Coordinator", "Molecular laboratory coordinator", "full"),
+    ("MTA", "Medical technical assistant", "full"),
+    ("Next Generation Sequencing ", "NGS ", "partial"),
+    ("MSE Professor", "Professor of materials science and engineering", "full"),
+    ("MSTP Student", "Medical scientist training programme (MSTP) student", "full"),
+    ("MST Conservation Biology Instructor", "Math, science and technology conservation biology instructor", "full"),
+    ("MT", "Medical technologist", "full"),
+    ("MTL", "Medical technologist for laboratory analysis", "full"),
+    ("MTLA", "Medical-technical laboratory assistant", "full"),
+    ("P.H.D Student", "PhD Student", "partial"),
+    ("P.H.D. Candidate", "PhD Student", "partial"),
+    ("P.Hd Student", "PhD Student", "partial"),
+    ("P.Hd. Student", "PhD Student", "partial"),
+    ("P.I", "Principal investigator", "partial"),
+    ("P.I.", "Principal investigator", "partial"),
+    ("PI", "Principal investigator", "full"),
+    ("P&D Analyst ", "Population and development analyst", "full"),
+    ("P&D Coordinator ", "People and development coordinator", "full"),
+    ("PA/DA Division Of Genetics & Genomics", "Physician assistant, Division of Genetics & Genomics", "full"),
+    ("PAU Teacher", "Secondary School Teacher", "full"),
+    ("Payables Specialist", "Account Payables", "full"),
+    ("PAYMENT", "Account Payables", "full"),
+    ("PDF ", "Postdoctoral fellow ", "partial"),
+    ("PDRA", "Postdoctoral research associate", "partial"),
+    ("PDRO", "Postdoctoral research officer", "partial"),
+    ("Pg ", "Postgraduate", "partial"),
+    ("Pg-", "Postgraduate", "partial"),
+    ("Pgd", "PGD Scientist", "full"),
+    ("PGR", "Postgraduate Researcher", "full"),
+    ("Pgr Student", "Postgraduate Research Student", "full"),
+    ("Pgx ", "Pharmacogenomics ", "partial"),
+    ("Ph D", "PhD", "partial"),
+    ("Ph. D ", "PhD ", "partial"),
+    ("PH D-", "PhD ", "partial"),
+    ("Ph.D", "PhD", "partial"),
+    ("Phd- XL Cycle", "PhD student", "full"),
+    ("Phd, CRI Inserm", "PhD research student", "full"),
+    ("Phd, CSO", "Phd, Chief scientific officer", "full"),
+    ("Phdc", "PhD Candidate", "full"),
+]
+
+def _compile_partial_pattern(raw: str):
+    trailing_space = raw.endswith(" ")
+    core = raw.rstrip()
+    escaped = re.escape(core)
+    if trailing_space:
+        pattern = rf'(?<!\w){escaped}\s+'
+    else:
+        pattern = rf'(?<!\w){escaped}(?!\w)'
+    return re.compile(pattern, re.IGNORECASE)
+
+
+def _prepare_rules(entries):
+    rules = []
+    seen = set()
+    for pattern, replacement, match_type in entries:
+        if not pattern or not replacement:
+            continue
+        key = (pattern.lower(), match_type)
+        if key in seen:
+            continue
+        seen.add(key)
+        if match_type == "full":
+            rules.append({"full": True, "pattern": pattern.lower().strip(), "replacement": replacement})
+        else:
+            rules.append({"full": False, "pattern": _compile_partial_pattern(pattern), "replacement": replacement})
+    return rules
+
+
+misspelling_rules = _prepare_rules(misspelling_entries)
+abbreviation_rules = _prepare_rules(
+    [(k, v, "full") for k, v in abbreviation_map.items()] + abbreviation_entries
+)
+
+def _apply_rules(text, rules):
+    updated = text
+    for rule in rules:
+        if rule["full"]:
+            if updated.lower() == rule["pattern"]:
+                updated = rule["replacement"]
+        else:
+            updated = rule["pattern"].sub(rule["replacement"], updated)
+    return updated
+
+
+def _normalise_ordinals(text: str) -> str:
+    def repl(m):
+        number = m.group(1)
+        tail = number[-2:] if len(number) > 1 else number[-1]
+        base_suffix = ordinal_suffixes.get(number[-1], "th")
+        if tail in {"11", "12", "13"}:
+            base_suffix = "th"
+        return f"{number}{base_suffix}"
+
+    return re.sub(r'\b(\d+)(st|nd|rd|th)\b', repl, text, flags=re.IGNORECASE)
+
 def remove_diacritics(s):
     n = unicodedata.normalize('NFD', s)
     return ''.join(ch for ch in n if unicodedata.category(ch) != 'Mn')
@@ -245,6 +431,9 @@ def clean_job_title_with_reason(title):
     t = email_pattern.sub('', t).strip()
     if not t:
         return None, "empty"
+    t = t.replace("_", " ")
+    t = re.sub(r'^\s*other\s*-\s*', '', t, flags=re.IGNORECASE)
+    t = _apply_rules(t, misspelling_rules)
 
     translated = translation_map.get(t.lower())
     if translated is not None:
@@ -265,9 +454,7 @@ def clean_job_title_with_reason(title):
     if t.lower() in junk_values:
         return None, "junk_value"
 
-    expanded = abbreviation_map.get(t.lower())
-    if expanded is not None:
-        t = expanded
+    t = _apply_rules(t, abbreviation_rules)
 
     t = roman_pattern.sub(roman_to_upper, t)
 
@@ -279,11 +466,18 @@ def clean_job_title_with_reason(title):
         if 0 < idx < total - 1 and lower_w in lower_middle_words:
             final.append(lower_w)
             continue
-        if w.isupper() or w.upper() in preserve_caps:
-            final.append("PhD" if lower_w == "phd" else w.upper())
-        else:
-            final.append("PhD" if lower_w == "phd" else w.title())
+        if lower_w == "phd":
+            final.append("PhD")
+            continue
+        if w.upper() in preserve_caps:
+            final.append(w.upper())
+            continue
+        if w.isupper():
+            final.append(w.title())
+            continue
+        final.append(w.title())
     t = ' '.join(final)
+    t = _normalise_ordinals(t)
 
     t = re.sub(r'\s*\|\s*', ', ', t)
     t = re.sub(r'(\b\w{4,}\b)\s*/\s*(\b\w{4,}\b)', r'\1 / \2', t)

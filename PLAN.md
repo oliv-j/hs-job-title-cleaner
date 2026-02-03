@@ -108,6 +108,7 @@ The cleaning core (`clean_job_title`) powers the CLI, Flask API/UI, and HubSpot 
 
 ## Change log
 -  (current) Rebuilt PLAN.md with confirmed scope, requirements, APIs, phases, repository map, and added explicit decisions on hosting (local-only), limits (500k rows), CI/pinning (deferred), Docker (future), accessibility/model/logging/backup (none).
+-  Added cleaning rules for underscore-to-space normalisation, `Other -` prefix stripping, boundary-scoped typo and abbreviation corrections, and ordinal casing, with regression tests in `tests/test_cleaning_rules_new.py`.
 
 ## References
 - README.md (overview/setup)
